@@ -21,6 +21,14 @@
         <constructor-arg value="pd1"/>
     </bean>
 
+<!--    <import resource="defaultAutowireByNameTests.xml"/>-->
+
+<!--    <alias name="conversionService" alias="service"/>-->
+<!--    -->
+<!--    <beans>-->
+<!--        -->
+<!--    </beans>-->
+
     <bean id="propertyDependency2"
           class="org.springframework.context.annotation.ComponentScanParserBeanDefinitionDefaultsTests$PropertyDependencyTestBean">
         <constructor-arg value="pd2"/>

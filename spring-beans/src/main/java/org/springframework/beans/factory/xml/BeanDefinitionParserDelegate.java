@@ -16,22 +16,8 @@
 
 package org.springframework.beans.factory.xml;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-
 import org.springframework.beans.BeanMetadataAttribute;
 import org.springframework.beans.BeanMetadataAttributeAccessor;
 import org.springframework.beans.PropertyValue;
@@ -65,6 +51,19 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.PatternMatchUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.xml.DomUtils;
+import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 /**
  * Stateful delegate class used to parse XML bean definitions.
@@ -416,18 +415,21 @@ public class BeanDefinitionParserDelegate {
 	 * {@link org.springframework.beans.factory.parsing.ProblemReporter}.
 	 */
 	public BeanDefinitionHolder parseBeanDefinitionElement(Element ele, BeanDefinition containingBean) {
-		String id = ele.getAttribute(ID_ATTRIBUTE);
-		String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
+
+		logger.info("🚀🍎---->开始<bean>标签的解析🌶!!!!!----->BeandefinitionParserDelegate::parseBeanDefinitionElement:ele{}" + ele);
+
+		String id = ele.getAttribute(ID_ATTRIBUTE);  //"id"
+		String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);   //"name"
 
 		List<String> aliases = new ArrayList<>();
-		if (StringUtils.hasLength(nameAttr)) {
+		if (StringUtils.hasLength(nameAttr)) {  //nama可以有多个
 			String[] nameArr = StringUtils.tokenizeToStringArray(nameAttr, MULTI_VALUE_ATTRIBUTE_DELIMITERS);
 			aliases.addAll(Arrays.asList(nameArr));
 		}
 
 		String beanName = id;
 		if (!StringUtils.hasText(beanName) && !aliases.isEmpty()) {
-			beanName = aliases.remove(0);
+			beanName = aliases.remove(0);      //id 没有
 			if (logger.isDebugEnabled()) {
 				logger.debug("No XML 'id' specified - using '" + beanName +
 						"' as bean name and " + aliases + " as aliases");
@@ -447,7 +449,7 @@ public class BeanDefinitionParserDelegate {
 								beanDefinition, this.readerContext.getRegistry(), true);
 					}
 					else {
-						beanName = this.readerContext.generateBeanName(beanDefinition);
+						beanName = this.readerContext.generateBeanName(beanDefinition);  //为bean生成一个名字
 						// Register an alias for the plain bean class name, if still possible,
 						// if the generator returned the class name plus a suffix.
 						// This is expected for Spring 1.2/2.0 backwards compatibility.
@@ -468,7 +470,7 @@ public class BeanDefinitionParserDelegate {
 					return null;
 				}
 			}
-			String[] aliasesArray = StringUtils.toStringArray(aliases);
+			String[] aliasesArray = StringUtils.toStringArray(aliases);  //list转成数组
 			return new BeanDefinitionHolder(beanDefinition, beanName, aliasesArray);
 		}
 
@@ -517,18 +519,29 @@ public class BeanDefinitionParserDelegate {
 			}
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
 
+			//解析<bean 标签里面的各种属性,比如scope,lazyinit等
 			parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
 			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
 
+			//解析<bean 里面的<meta标签
 			parseMetaElements(ele, bd);
 			parseLookupOverrideSubElements(ele, bd.getMethodOverrides());
 			parseReplacedMethodSubElements(ele, bd.getMethodOverrides());
 
+
+			//解析<bean 里面的<constructor>标签
 			parseConstructorArgElements(ele, bd);
+
+			//解析<bean 里面的<property>标签
 			parsePropertyElements(ele, bd);
+
+			//解析<bean 里面的<qualifier>标签
 			parseQualifierElements(ele, bd);
 
+
 			bd.setResource(this.readerContext.getResource());
+
+			//这个extract有啥用没有看懂
 			bd.setSource(extractSource(ele));
 
 			return bd;
@@ -558,6 +571,9 @@ public class BeanDefinitionParserDelegate {
 	 */
 	public AbstractBeanDefinition parseBeanDefinitionAttributes(Element ele, String beanName,
 			BeanDefinition containingBean, AbstractBeanDefinition bd) {
+
+		logger.info("🚀🍎---->开始parseBeandifinitaion 的 <bean>标签🌶!!!!!----->BeanDefinitionParserDelegate::parseBeanDefinitionAttributes");
+
 
 		if (ele.hasAttribute(SINGLETON_ATTRIBUTE)) {
 			error("Old 1.x 'singleton' attribute in use - upgrade to 'scope' declaration", ele);

@@ -314,10 +314,12 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 		Assert.notNull(encodedResource, "EncodedResource must not be null");
 		if (logger.isInfoEnabled()) {
 			logger.info("Loading XML bean definitions from " + encodedResource.getResource());
+			logger.info("🚀🍎---->开始加载xml🌶!!!!!");
 		}
 
 		Set<EncodedResource> currentResources = this.resourcesCurrentlyBeingLoaded.get();
 		if (currentResources == null) {
+			//懒加载
 			currentResources = new HashSet<>(4);
 			this.resourcesCurrentlyBeingLoaded.set(currentResources);
 		}
@@ -386,6 +388,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 */
 	protected int doLoadBeanDefinitions(InputSource inputSource, Resource resource)
 			throws BeanDefinitionStoreException {
+
+		logger.info("🚀🍎---->开始加载xml🌶!!!!!----->doLoadBeanDefinitions");
+
 		try {
 			Document doc = doLoadDocument(inputSource, resource);
 			return registerBeanDefinitions(doc, resource); //注册bean
@@ -515,7 +520,7 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	 * @see #setDocumentReaderClass
 	 */
 	protected BeanDefinitionDocumentReader createBeanDefinitionDocumentReader() {
-		return BeanDefinitionDocumentReader.class.cast(BeanUtils.instantiateClass(this.documentReaderClass));
+		return (BeanDefinitionDocumentReader) BeanUtils.instantiateClass(this.documentReaderClass);
 	}
 
 	/**

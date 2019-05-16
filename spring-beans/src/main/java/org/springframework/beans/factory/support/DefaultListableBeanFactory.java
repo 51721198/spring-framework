@@ -797,6 +797,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		Assert.hasText(beanName, "Bean name must not be empty");
 		Assert.notNull(beanDefinition, "BeanDefinition must not be null");
 
+
+		logger.info("🚀🍎---->开始registerBeanDefinition🌶!!!!!----->DefaultListableBeanFacotry::registerBeanDefinition:->" + beanName);
+
 		if (beanDefinition instanceof AbstractBeanDefinition) {
 			try {
 				((AbstractBeanDefinition) beanDefinition).validate();
@@ -810,8 +813,9 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		BeanDefinition oldBeanDefinition;
 
 		oldBeanDefinition = this.beanDefinitionMap.get(beanName);
-		if (oldBeanDefinition != null) {
+		if (oldBeanDefinition != null) {  //如果已经存在这个bean了
 			if (!isAllowBeanDefinitionOverriding()) {
+				//不允许bean定义覆盖那么抛出异常
 				throw new BeanDefinitionStoreException(beanDefinition.getResourceDescription(), beanName,
 						"Cannot register bean definition [" + beanDefinition + "] for bean '" + beanName +
 						"': There is already [" + oldBeanDefinition + "] bound.");
@@ -838,17 +842,21 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 							"] with [" + beanDefinition + "]");
 				}
 			}
-			this.beanDefinitionMap.put(beanName, beanDefinition);
+			this.beanDefinitionMap.put(beanName, beanDefinition);  //新的bean定义将会覆盖旧的bean定义
 		}
 		else {
-			if (hasBeanCreationStarted()) {
+			//如果不存在旧的
+			if (hasBeanCreationStarted()) {  //如果同名bean已经处于创建中,意思是已经开始bean创建了吗?
 				// Cannot modify startup-time collection elements anymore (for stable iteration)
-				synchronized (this.beanDefinitionMap) {
+				synchronized (this.beanDefinitionMap) {   //不能修改已经创建的bean吗?网上说这是一种copyonwrite思想,无法理解,先跳过,todo
 					this.beanDefinitionMap.put(beanName, beanDefinition);
 					List<String> updatedDefinitions = new ArrayList<>(this.beanDefinitionNames.size() + 1);
 					updatedDefinitions.addAll(this.beanDefinitionNames);
 					updatedDefinitions.add(beanName);
 					this.beanDefinitionNames = updatedDefinitions;
+
+					//如果单例模式的bean名单中有该bean的name，那么移除掉它。
+					//也就是说: 将一个原本是单例模式的bean重新注册成一个普通的bean,这相当于是覆盖造成的属性擦除吧,把单例特殊bean擦除变成普通bean
 					if (this.manualSingletonNames.contains(beanName)) {
 						Set<String> updatedSingletons = new LinkedHashSet<>(this.manualSingletonNames);
 						updatedSingletons.remove(beanName);
@@ -865,6 +873,13 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			this.frozenBeanDefinitionNames = null;
 		}
 
+
+		/**
+		 * 1：oldBeanDefinition如果存在，且执行到了这里也没有抛出异常，说明该BeanDefinition已经被覆盖，缓存需要更新。
+		 * 2：如果是单例模式的bean对象则Set中包含该beanName，执行到这里说明该BeanDefinition已经从一个单例模式的bean变为了一个普通的bean，所以缓存也需要更新。
+		 *
+		 */
+		//如果oldbean定义是本来就有的,到这里说明很可能发生过覆盖了,比如前边就会把一个单例bean擦除成普通bean,这种情况下,应该刷新缓存
 		if (oldBeanDefinition != null || containsSingleton(beanName)) {
 			resetBeanDefinition(beanName);
 		}
@@ -911,9 +926,11 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		// Remove corresponding bean from singleton cache, if any. Shouldn't usually
 		// be necessary, rather just meant for overriding a context's default beans
 		// (e.g. the default StaticMessageSource in a StaticApplicationContext).
+		//因为这个bean已经发生了singleton属性擦除了,已经被开除出了singletonbean的队伍
 		destroySingleton(beanName);
 
 		// Reset all bean definitions that have the given bean as parent (recursively).
+		//递归删除子类缓存
 		for (String bdName : this.beanDefinitionNames) {
 			if (!beanName.equals(bdName)) {
 				BeanDefinition bd = this.beanDefinitionMap.get(bdName);
