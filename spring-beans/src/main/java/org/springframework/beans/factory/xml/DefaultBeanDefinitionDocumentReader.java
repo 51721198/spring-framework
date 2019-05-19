@@ -90,6 +90,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		this.readerContext = readerContext;
 		logger.debug("Loading bean definitions");
 		Element root = doc.getDocumentElement();
+		//🍎🍎🍎🍎这里
 		doRegisterBeanDefinitions(root);
 	}
 
@@ -142,9 +143,11 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 		preProcessXml(root);  //留给子类去覆盖
 
 
-		//解析阶段最主要的就是这个逻辑了,注意这里除了有parse的逻辑,也有regist的逻辑
+		//🍎🍎🍎🍎🍎🍎🍎🍎🍎主逻辑入口::::解析阶段最主要的就是这个逻辑了,注意这里除了有parse的逻辑,也有regist的逻辑
 		logger.info("🚀🍎---->开始注册beanDefinitions🌶!!!!!----->BeandefinitionDocumentReader::doRegisterBeanDefinitions");
 		parseBeanDefinitions(root, this.delegate);
+
+
 		postProcessXml(root);  //留给子类覆盖
 
 		this.delegate = parent;

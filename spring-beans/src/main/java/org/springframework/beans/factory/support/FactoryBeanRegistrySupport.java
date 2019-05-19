@@ -16,6 +16,12 @@
 
 package org.springframework.beans.factory.support;
 
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanCreationException;
+import org.springframework.beans.factory.BeanCurrentlyInCreationException;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.FactoryBeanNotInitializedException;
+
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
@@ -23,12 +29,6 @@ import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.BeanCurrentlyInCreationException;
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.FactoryBeanNotInitializedException;
 
 /**
  * Support base class for singleton registries which need to handle
@@ -96,20 +96,27 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 	 * @see org.springframework.beans.factory.FactoryBean#getObject()
 	 */
 	protected Object getObjectFromFactoryBean(FactoryBean<?> factory, String beanName, boolean shouldPostProcess) {
+
+		//factorybean也分单例和非单例,单例facotorybean的getbean只会返回同一个obj
 		if (factory.isSingleton() && containsSingleton(beanName)) {
 			synchronized (getSingletonMutex()) {
-				Object object = this.factoryBeanObjectCache.get(beanName);
+				Object object = this.factoryBeanObjectCache.get(beanName);  //factorybean也有自己的缓存,单例bean只允许存在一个
+
+				//缓存里面没有拿到,这个时候需要创建了
 				if (object == null) {
 					object = doGetObjectFromFactoryBean(factory, beanName);
 					// Only post-process and store if not put there already during getObject() call above
 					// (e.g. because of circular reference processing triggered by custom getBean calls)
-					Object alreadyThere = this.factoryBeanObjectCache.get(beanName);
+					Object alreadyThere = this.factoryBeanObjectCache.get(beanName); //单例工厂创建的bean也是有缓存的,反正他妈到处都是缓存
 					if (alreadyThere != null) {
-						object = alreadyThere;
+						object = alreadyThere; //如果有缓存那么用缓存里面的,难以理解,注释说是为了做循环引用的
+						//alreadyThere和object的区别就是alreadythere已经是做过后处理了,所以这里直接返回,不需要再后处理一次了
 					}
 					else {
 						if (object != null && shouldPostProcess) {
 							try {
+								//🍎🍎🍎🍎🍎🍎对facorybean生成的bean进行postProcessAfterInitialization,也是比较重要的逻辑
+								//object没有被缓存过,所以先后处理下,然后再放到缓存里,否则以后拿出来用的时候还要再后处理一次有点蛋疼
 								object = postProcessObjectFromFactoryBean(object, beanName);
 							}
 							catch (Throwable ex) {
@@ -124,6 +131,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 			}
 		}
 		else {
+			//非单例bean的创建
 			Object object = doGetObjectFromFactoryBean(factory, beanName);
 			if (object != null && shouldPostProcess) {
 				try {
@@ -133,6 +141,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 					throw new BeanCreationException(beanName, "Post-processing of FactoryBean's object failed", ex);
 				}
 			}
+			//非单例的bean的创建不能仍缓存,保证每次创建出来的bean都是新鲜的
 			return object;
 		}
 	}
@@ -165,7 +174,8 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 				}
 			}
 			else {
-				object = factory.getObject();
+				//🍎🍎🍎🍎🍎🍎正常逻辑走这里,这里没有从缓存拿而是调用了真正的创建逻辑
+				object = factory.getObject();  //从facotybean获取bean的方式由各种factorybean自己控制
 			}
 		}
 		catch (FactoryBeanNotInitializedException ex) {
@@ -178,6 +188,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 		// Do not accept a null value for a FactoryBean that's not fully
 		// initialized yet: Many FactoryBeans just return null then.
 		if (object == null && isSingletonCurrentlyInCreation(beanName)) {
+			//如果bean还在创建中那么就抛错而不是返回一个null
 			throw new BeanCurrentlyInCreationException(
 					beanName, "FactoryBean which is currently in creation returned null from getObject");
 		}

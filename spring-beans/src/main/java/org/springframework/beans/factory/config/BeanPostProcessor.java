@@ -40,7 +40,6 @@ import org.springframework.beans.BeansException;
  * @see BeanFactoryPostProcessor
  */
 public interface BeanPostProcessor {
-
 	/**
 	 * Apply this BeanPostProcessor to the given new bean instance <i>before</i> any bean
 	 * initialization callbacks (like InitializingBean's {@code afterPropertiesSet}

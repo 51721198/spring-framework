@@ -88,6 +88,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
 
 	/** Cache of early singleton objects: bean name --> bean instance */
+	//这个early的map是用来做缓存的
 	private final Map<String, Object> earlySingletonObjects = new HashMap<>(16);
 
 	/** Set of registered singletons, containing the bean names in registration order */
@@ -169,7 +170,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 
 	@Override
 	public Object getSingleton(String beanName) {
-		return getSingleton(beanName, true);
+		return getSingleton(beanName, true);  //allowEarlyReference只能通过子类覆盖的方式设置为false
 	}
 
 	/**
@@ -180,17 +181,17 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param allowEarlyReference whether early references should be created or not
 	 * @return the registered singleton object, or {@code null} if none found
 	 */
-	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
+	protected Object getSingleton(String beanName, boolean allowEarlyReference) {  //allowEarlyReference
 		Object singletonObject = this.singletonObjects.get(beanName);  //singletonObjects 是一个 name -> bean的map
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
 			synchronized (this.singletonObjects) {
 				singletonObject = this.earlySingletonObjects.get(beanName);
-				if (singletonObject == null && allowEarlyReference) {
-					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);
+				if (singletonObject == null && allowEarlyReference) {  //允许早引用意味着允许循环引用
+					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);  //singletonFactories就是用来解决循环引用的
 					if (singletonFactory != null) {
 						singletonObject = singletonFactory.getObject();
 						this.earlySingletonObjects.put(beanName, singletonObject);
-						this.singletonFactories.remove(beanName);
+						this.singletonFactories.remove(beanName);   //为什么这里是remove了?🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎这里严重没弄明白!!!!
 					}
 				}
 			}
@@ -447,6 +448,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		return isDependent(beanName, dependentBeanName, null);
 	}
 
+	//🍎这是个递归,这个递归是个傻子吧,alreadySeen一定是null的啊,并没有看到其他地方有调用,而且是private
 	private boolean isDependent(String beanName, String dependentBeanName, Set<String> alreadySeen) {
 		if (alreadySeen != null && alreadySeen.contains(beanName)) {
 			return false;

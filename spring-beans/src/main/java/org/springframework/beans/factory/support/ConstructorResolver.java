@@ -16,22 +16,8 @@
 
 package org.springframework.beans.factory.support;
 
-import java.beans.ConstructorProperties;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Executable;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeanMetadataElement;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
@@ -55,6 +41,22 @@ import org.springframework.util.ObjectUtils;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
+import java.beans.ConstructorProperties;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 /**
  * Delegate for resolving constructors and factory methods.
  * Performs constructor resolution through argument matching.
@@ -69,6 +71,7 @@ import org.springframework.util.StringUtils;
  * @see AbstractAutowireCapableBeanFactory
  */
 class ConstructorResolver {
+	protected final Log logger = LogFactory.getLog(getClass());
 
 	private static final NamedThreadLocal<InjectionPoint> currentInjectionPoint =
 			new NamedThreadLocal<>("Current injection point");
@@ -101,22 +104,23 @@ class ConstructorResolver {
 	 */
 	public BeanWrapper autowireConstructor(final String beanName, final RootBeanDefinition mbd,
 			Constructor<?>[] chosenCtors, final Object[] explicitArgs) {
+		logger.info("🍎🚀创建bean主逻辑开始...beanName = {}" + beanName);
 
 		BeanWrapperImpl bw = new BeanWrapperImpl();
-		this.beanFactory.initBeanWrapper(bw);
+		this.beanFactory.initBeanWrapper(bw);  //初始化beanwrapper
 
 		Constructor<?> constructorToUse = null;
 		ArgumentsHolder argsHolderToUse = null;
 		Object[] argsToUse = null;
 
 		if (explicitArgs != null) {
-			argsToUse = explicitArgs;
+			argsToUse = explicitArgs;  //如果参数传了参数那就直接用传进来的
 		}
-		else {
+		else {   //否则使用解析出来的构造函数参数
 			Object[] argsToResolve = null;
 			synchronized (mbd.constructorArgumentLock) {
 				constructorToUse = (Constructor<?>) mbd.resolvedConstructorOrFactoryMethod;
-				if (constructorToUse != null && mbd.constructorArgumentsResolved) {
+				if (constructorToUse != null && mbd.constructorArgumentsResolved) { //主逻辑进不来这个if
 					// Found a cached constructor...
 					argsToUse = mbd.resolvedConstructorArguments;
 					if (argsToUse == null) {
@@ -129,7 +133,8 @@ class ConstructorResolver {
 			}
 		}
 
-		if (constructorToUse == null) {
+		//到这里的话,构造函数的参数基本上参数都已经解析完毕了
+		if (constructorToUse == null) {  //🍎🍎🍎🍎🍎🍎一般情况下这个constructorToUse都是为null的,所以这个if肯定能进的
 			// Need to resolve the constructor.
 			boolean autowiring = (chosenCtors != null ||
 					mbd.getResolvedAutowireMode() == RootBeanDefinition.AUTOWIRE_CONSTRUCTOR);
@@ -139,7 +144,7 @@ class ConstructorResolver {
 			if (explicitArgs != null) {
 				minNrOfArgs = explicitArgs.length;
 			}
-			else {
+			else {//这里
 				ConstructorArgumentValues cargs = mbd.getConstructorArgumentValues();
 				resolvedValues = new ConstructorArgumentValues();
 				minNrOfArgs = resolveConstructorArguments(beanName, mbd, bw, cargs, resolvedValues);
@@ -164,6 +169,7 @@ class ConstructorResolver {
 			Set<Constructor<?>> ambiguousConstructors = null;
 			LinkedList<UnsatisfiedDependencyException> causes = null;
 
+			//这个for循环也太他妈恶心了
 			for (Constructor<?> candidate : candidates) {
 				Class<?>[] paramTypes = candidate.getParameterTypes();
 
@@ -199,7 +205,7 @@ class ConstructorResolver {
 							causes = new LinkedList<>();
 						}
 						causes.add(ex);
-						continue;
+						continue;   //出现异常了只是捕获而不会中断创建过程
 					}
 				}
 				else {
@@ -210,17 +216,20 @@ class ConstructorResolver {
 					argsHolder = new ArgumentsHolder(explicitArgs);
 				}
 
+
+				//这个计算实际上是算match的权重吧,只会挑一个最match的来实例化的意思???
 				int typeDiffWeight = (mbd.isLenientConstructorResolution() ?
 						argsHolder.getTypeDifferenceWeight(paramTypes) : argsHolder.getAssignabilityWeight(paramTypes));
 				// Choose this constructor if it represents the closest match.
 				if (typeDiffWeight < minTypeDiffWeight) {
-					constructorToUse = candidate;
+					constructorToUse = candidate;   //下面会判断这个字段不为null才会创建,所以这里赋值就表明已经找到了目标constructor了
 					argsHolderToUse = argsHolder;
-					argsToUse = argsHolder.arguments;
+					argsToUse = argsHolder.arguments;   //object数组
 					minTypeDiffWeight = typeDiffWeight;
 					ambiguousConstructors = null;
 				}
 				else if (constructorToUse != null && typeDiffWeight == minTypeDiffWeight) {
+					//进到这个分支里的话会把这个constructor标记成备胎放起来
 					if (ambiguousConstructors == null) {
 						ambiguousConstructors = new LinkedHashSet<>();
 						ambiguousConstructors.add(constructorToUse);
@@ -230,6 +239,7 @@ class ConstructorResolver {
 			}
 
 			if (constructorToUse == null) {
+				//没有找到合适的constructor,报错退出
 				if (causes != null) {
 					UnsatisfiedDependencyException ex = causes.removeLast();
 					for (Exception cause : causes) {
@@ -242,6 +252,7 @@ class ConstructorResolver {
 						"(hint: specify index/type/name arguments for simple parameters to avoid type ambiguities)");
 			}
 			else if (ambiguousConstructors != null && !mbd.isLenientConstructorResolution()) {
+				//有多个模糊的constructor,spring判断不出来到底改用哪个,报错退出
 				throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 						"Ambiguous constructor matches found in bean '" + beanName + "' " +
 						"(hint: specify index/type/name arguments for simple parameters to avoid type ambiguities): " +
@@ -253,6 +264,8 @@ class ConstructorResolver {
 			}
 		}
 
+
+		//🍎🍎🍎🍎🍎到这里说明,已经找到了合适的constructor了,终于要开始实例化了!!!!
 		try {
 			Object beanInstance;
 
@@ -268,6 +281,7 @@ class ConstructorResolver {
 				}, beanFactory.getAccessControlContext());
 			}
 			else {
+				//🍎🍎🍎🍎🍎其实底层调的是java反射的constructor.newinstance函数
 				beanInstance = this.beanFactory.getInstantiationStrategy().instantiate(
 						mbd, beanName, this.beanFactory, constructorToUse, argsToUse);
 			}
@@ -347,6 +361,10 @@ class ConstructorResolver {
 	 * to match with the parameters. We don't have the types attached to constructor args,
 	 * so trial and error is the only way to go here. The explicitArgs array may contain
 	 * argument values passed in programmatically via the corresponding getBean method.
+	 * google翻译:
+	 * 使用命名的工厂方法实例化bean。 如果bean定义参数指定了一个类，而不是“factory-bean”，或者工厂对象本身使用依赖注入配置的实例变量，
+	 * 则该方法可以是静态的。实现需要使用名称迭代静态或实例方法 在RootBeanDefinition中指定（该方法可能会重载）并尝试与参数匹配。
+	 * 我们没有附加到构造函数args的类型，因此试验和错误是唯一的方法。 explicitArgs数组可以包含通过相应的getBean方法以编程方式传递的参数值。
 	 * @param beanName the name of the bean
 	 * @param mbd the merged bean definition for the bean
 	 * @param explicitArgs argument values passed in programmatically via the getBean
@@ -356,6 +374,8 @@ class ConstructorResolver {
 	public BeanWrapper instantiateUsingFactoryMethod(
 			final String beanName, final RootBeanDefinition mbd, final Object[] explicitArgs) {
 
+
+		logger.info("🍎🍎🍎🍎🍎🍎🍎🍎🍎利用工厂方法开始实例化bean--->beanname:: '" + beanName);
 		BeanWrapperImpl bw = new BeanWrapperImpl();
 		this.beanFactory.initBeanWrapper(bw);
 

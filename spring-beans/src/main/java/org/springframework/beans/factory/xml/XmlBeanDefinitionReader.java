@@ -334,6 +334,8 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 				if (encodedResource.getEncoding() != null) {
 					inputSource.setEncoding(encodedResource.getEncoding());
 				}
+
+				//🍎🍎🍎🍎🍎🍎🍎🍎这里这里
 				return doLoadBeanDefinitions(inputSource, encodedResource.getResource());
 			}
 			finally {
@@ -393,6 +395,9 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 
 		try {
 			Document doc = doLoadDocument(inputSource, resource);
+
+
+			//🍎🍎🍎🍎🍎主逻辑入口在这里
 			return registerBeanDefinitions(doc, resource); //注册bean
 		}
 		catch (BeanDefinitionStoreException ex) {
@@ -509,6 +514,8 @@ public class XmlBeanDefinitionReader extends AbstractBeanDefinitionReader {
 	public int registerBeanDefinitions(Document doc, Resource resource) throws BeanDefinitionStoreException {
 		BeanDefinitionDocumentReader documentReader = createBeanDefinitionDocumentReader();
 		int countBefore = getRegistry().getBeanDefinitionCount();
+
+		//🍎🍎🍎🍎🍎这里这里
 		documentReader.registerBeanDefinitions(doc, createReaderContext(resource));
 		return getRegistry().getBeanDefinitionCount() - countBefore;
 	}

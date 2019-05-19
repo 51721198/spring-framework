@@ -16,26 +16,6 @@
 
 package org.springframework.beans.factory.support;
 
-import java.beans.PropertyEditor;
-import java.security.AccessControlContext;
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeansException;
@@ -76,6 +56,26 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.StringValueResolver;
+
+import java.beans.PropertyEditor;
+import java.security.AccessControlContext;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Abstract base class for {@link org.springframework.beans.factory.BeanFactory}
@@ -238,10 +238,12 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 		// Eagerly check singleton cache for manually registered singletons.
 		Object sharedInstance = getSingleton(beanName);
+
 		if (sharedInstance != null && args == null) {
+			//已经从缓存里面拿到了预创建的singleton bean,这种情况很有可能是循环引用了
 			if (logger.isDebugEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
-					logger.debug("Returning eagerly cached instance of singleton bean '" + beanName +
+					logger.debug("🍎🍎🍎🍎🍎🍎🍎🍎🍎检测到有循环引用--->Returning eagerly cached instance of singleton bean '" + beanName +
 							"' that is not fully initialized yet - a consequence of a circular reference");
 				}
 				else {
@@ -252,6 +254,9 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		}
 
 		else {
+			//到这里有以下几种情况: 1. sharedInstance为null,也就是说没有循环引用,
+			//2. args != null 这个如果是getBean过来的话这里肯定是null的
+			//非循环引用的情况下,如果检测到了bean已经在创建中那么直接就抛异常
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
 			if (isPrototypeCurrentlyInCreation(beanName)) {
@@ -259,8 +264,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 
 			// Check if bean definition exists in this factory.
-			BeanFactory parentBeanFactory = getParentBeanFactory();
+			BeanFactory parentBeanFactory = getParentBeanFactory();   //获取父类beanfacotory
 			if (parentBeanFactory != null && !containsBeanDefinition(beanName)) {
+				//进这里属于异常情况,因为一般containsBeanDefinition()肯定是能返回true的
+				//没有在bean定义map中查询到bean定义,那么到父类factory中再去找一次
 				// Not found -> check parent.
 				String nameToLookup = originalBeanName(name);
 				if (args != null) {
@@ -286,11 +293,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				if (dependsOn != null) {
 					for (String dep : dependsOn) {
 						if (isDependent(beanName, dep)) {
+
+							//注意了,我们还处在非循环引用的else分支里,这里还是不允许循环引用
 							throw new BeanCreationException(mbd.getResourceDescription(), beanName,
 									"Circular depends-on relationship between '" + beanName + "' and '" + dep + "'");
 						}
-						registerDependentBean(dep, beanName);
-						getBean(dep);
+						registerDependentBean(dep, beanName);  //被依赖的bean需要注册到dependentBeanMap里,当原始bean
+						getBean(dep); //这个getBean处于for循环里,也就是说会循环获取依赖的bean,他这里有点绕,实际上是一个递归
 					}
 				}
 
@@ -300,6 +309,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						@Override
 						public Object getObject() throws BeansException {
 							try {
+
+								//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎终于到啦激动人心的创建bean🌶!!!!!
 								return createBean(beanName, mbd, args);
 							}
 							catch (BeansException ex) {
@@ -1118,7 +1129,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @param bw the BeanWrapper to initialize
 	 */
 	protected void initBeanWrapper(BeanWrapper bw) {
-		bw.setConversionService(getConversionService());
+		bw.setConversionService(getConversionService());  //getConversionServiceo会返回一个类型转换器
 		registerCustomEditors(bw);
 	}
 
@@ -1136,10 +1147,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		if (registrySupport != null) {
 			registrySupport.useConfigValueEditors();
 		}
-		if (!this.propertyEditorRegistrars.isEmpty()) {
+		if (!this.propertyEditorRegistrars.isEmpty()) {   //系统总属性编辑注册器不为空的情况下,需要添加新的自定义属性编辑器
 			for (PropertyEditorRegistrar registrar : this.propertyEditorRegistrars) {
 				try {
-					registrar.registerCustomEditors(registry);
+					registrar.registerCustomEditors(registry);   //把一个集合里的元素搬到另外一个集合...
 				}
 				catch (BeanCreationException ex) {
 					Throwable rootCause = ex.getMostSpecificCause();
@@ -1591,22 +1602,24 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		// If it's a FactoryBean, we use it to create a bean instance, unless the
 		// caller actually wants a reference to the factory.
 		if (!(beanInstance instanceof FactoryBean) || BeanFactoryUtils.isFactoryDereference(name)) {
+			//如果只是个普通bean那么直接返回
 			return beanInstance;
 		}
 
+		//到这里说明这个bean是个factorybean
 		Object object = null;
 		if (mbd == null) {
-			object = getCachedObjectForFactoryBean(beanName);
+			object = getCachedObjectForFactoryBean(beanName);  //从factorybean缓存中获取bean,还不是用factorybean创建的
 		}
-		if (object == null) {
+		if (object == null) {  //如果从factorybean缓存中获取bean失败了,那么这个时候需要创建并加到缓存里面
 			// Return bean instance from factory.
 			FactoryBean<?> factory = (FactoryBean<?>) beanInstance;
 			// Caches object obtained from FactoryBean if it is a singleton.
 			if (mbd == null && containsBeanDefinition(beanName)) {
-				mbd = getMergedLocalBeanDefinition(beanName);
+				mbd = getMergedLocalBeanDefinition(beanName);  //获取bean定义
 			}
-			boolean synthetic = (mbd != null && mbd.isSynthetic());
-			object = getObjectFromFactoryBean(factory, beanName, !synthetic);
+			boolean synthetic = (mbd != null && mbd.isSynthetic());  //synthetic = 合成的,即spring自己的bean
+			object = getObjectFromFactoryBean(factory, beanName, !synthetic);  //如果是synthetic那么不需要后处理
 		}
 		return object;
 	}

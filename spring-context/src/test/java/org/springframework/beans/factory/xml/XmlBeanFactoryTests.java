@@ -16,21 +16,8 @@
 
 package org.springframework.beans.factory.xml;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringWriter;
-import java.lang.reflect.Method;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import org.apache.commons.logging.LogFactory;
 import org.junit.Test;
-import org.xml.sax.InputSource;
-
 import org.springframework.aop.framework.ProxyFactory;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
@@ -66,9 +53,29 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.FileCopyUtils;
 import org.springframework.util.SerializationTestUtils;
 import org.springframework.util.StopWatch;
+import org.xml.sax.InputSource;
 
-import static org.hamcrest.CoreMatchers.*;
-import static org.junit.Assert.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.lang.reflect.Method;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * Miscellaneous tests for XML bean definitions.
@@ -136,9 +143,9 @@ public class XmlBeanFactoryTests {
 		DefaultListableBeanFactory xbf = new DefaultListableBeanFactory();
 		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(xbf);
 		reader.setValidationMode(XmlBeanDefinitionReader.VALIDATION_NONE);
-		reader.loadBeanDefinitions(REFTYPES_CONTEXT);
+		reader.loadBeanDefinitions(REFTYPES_CONTEXT);   //load只会注册bean定义,绝对不会实例化bean,todo 到底哪里调的facotorypostprocess,还是说普通beanfactory根本就不没有
 
-		TestBean emma = (TestBean) xbf.getBean("emma");
+		TestBean emma = (TestBean) xbf.getBean("emma");  //getBean的时候才会实例化bean,千万不要搞错
 		TestBean georgia = (TestBean) xbf.getBean("georgia");
 		ITestBean emmasJenks = emma.getSpouse();
 		ITestBean georgiasJenks = georgia.getSpouse();
