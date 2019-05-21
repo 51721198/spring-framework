@@ -181,15 +181,15 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 	 * @param allowEarlyReference whether early references should be created or not
 	 * @return the registered singleton object, or {@code null} if none found
 	 */
-	protected Object getSingleton(String beanName, boolean allowEarlyReference) {  //allowEarlyReference
+	protected Object getSingleton(String beanName, boolean allowEarlyReference) {
 		Object singletonObject = this.singletonObjects.get(beanName);  //singletonObjects 是一个 name -> bean的map
 		if (singletonObject == null && isSingletonCurrentlyInCreation(beanName)) {
 			synchronized (this.singletonObjects) {
 				singletonObject = this.earlySingletonObjects.get(beanName);
 				if (singletonObject == null && allowEarlyReference) {  //允许早引用意味着允许循环引用
 					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);  //singletonFactories就是用来解决循环引用的
-					if (singletonFactory != null) {
-						singletonObject = singletonFactory.getObject();
+					if (singletonFactory != null) {  //beanName  -> Objfactory 的map
+						singletonObject = singletonFactory.getObject();   //factoryBean要通过getObj才能获取到bean
 						this.earlySingletonObjects.put(beanName, singletonObject);
 						this.singletonFactories.remove(beanName);   //为什么这里是remove了?🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎这里严重没弄明白!!!!
 					}
@@ -212,7 +212,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 		synchronized (this.singletonObjects) {
 			Object singletonObject = this.singletonObjects.get(beanName);
 			if (singletonObject == null) {
-				if (this.singletonsCurrentlyInDestruction) {
+				if (this.singletonsCurrentlyInDestruction) {  //如果bean正在销毁中那么抛出异常
 					throw new BeanCreationNotAllowedException(beanName,
 							"Singleton bean creation not allowed while singletons of this factory are in destruction " +
 							"(Do not request a bean from a BeanFactory in a destroy method implementation!)");
@@ -220,13 +220,14 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (logger.isDebugEnabled()) {
 					logger.debug("Creating shared instance of singleton bean '" + beanName + "'");
 				}
-				beforeSingletonCreation(beanName);
+				beforeSingletonCreation(beanName);  //如果bean正在创建中那么抛出异常
 				boolean newSingleton = false;
 				boolean recordSuppressedExceptions = (this.suppressedExceptions == null);
 				if (recordSuppressedExceptions) {
 					this.suppressedExceptions = new LinkedHashSet<>();
 				}
 				try {
+					//🍎从factory中获取bean
 					singletonObject = singletonFactory.getObject();
 					newSingleton = true;
 				}
@@ -250,7 +251,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 					if (recordSuppressedExceptions) {
 						this.suppressedExceptions = null;
 					}
-					afterSingletonCreation(beanName);
+					afterSingletonCreation(beanName);//如果bean正在创建中那么抛出异常
 				}
 				if (newSingleton) {
 					addSingleton(beanName, singletonObject);

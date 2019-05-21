@@ -15,7 +15,7 @@
 		<property name="spouse" ref="jenny"/>
 	</bean>
 
-
+<!--	注意了这个jenks是prototype的,依赖jenny-->
 	<bean id="jenks" class="org.springframework.tests.sample.beans.TestBean" scope="prototype">
 		<property name="name"><value>Andrew</value></property>
 		<property name="age"><value>36</value></property>

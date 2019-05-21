@@ -243,7 +243,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			//已经从缓存里面拿到了预创建的singleton bean,这种情况很有可能是循环引用了
 			if (logger.isDebugEnabled()) {
 				if (isSingletonCurrentlyInCreation(beanName)) {
-					logger.debug("🍎🍎🍎🍎🍎🍎🍎🍎🍎检测到有循环引用--->Returning eagerly cached instance of singleton bean '" + beanName +
+					logger.debug("🍎检测到有循环引用--->Returning eagerly cached instance of singleton bean '" + beanName +
 							"' that is not fully initialized yet - a consequence of a circular reference");
 				}
 				else {
@@ -311,7 +311,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 							try {
 
 								//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎终于到啦激动人心的创建bean🌶!!!!!
-								return createBean(beanName, mbd, args);
+								return createBean(beanName, mbd, args);  //这里会把创建的bean塞进一个beanfacotry,外层getSingleton又会把拿出来
 							}
 							catch (BeansException ex) {
 								// Explicitly remove instance from singleton cache: It might have been put there
@@ -322,10 +322,11 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 							}
 						}
 					});
+					//为什么会有这个,是因为前面返回的sharedInstance很有可能是一个factorybean,如果确实是facotybean那么需要从其中拿到bean
 					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
 				}
 
-				else if (mbd.isPrototype()) {
+				else if (mbd.isPrototype()) {  //🍎scope是prototype模式的话,感觉这个过程和singleton的好像并没有什么区别
 					// It's a prototype -> create a new instance.
 					Object prototypeInstance = null;
 					try {
@@ -338,7 +339,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					bean = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
 				}
 
-				else {
+				else {//除了singleton和protutype的其他bean类型,也是没有看出来有什么区别
 					String scopeName = mbd.getScope();
 					final Scope scope = this.scopes.get(scopeName);
 					if (scope == null) {
@@ -373,7 +374,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			}
 		}
 
-		// Check if required type matches the type of the actual bean instance.
+		// Check if required type matches the type of the actual bean instance.检测返回bean的class类型与想要的类型是否一致,如果不一致要尝试转换
 		if (requiredType != null && bean != null && !requiredType.isAssignableFrom(bean.getClass())) {
 			try {
 				return getTypeConverter().convertIfNecessary(bean, requiredType);
@@ -1606,7 +1607,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			return beanInstance;
 		}
 
-		//到这里说明这个bean是个factorybean
+		//到这里说明这个beanInstance是个FactoryBean
 		Object object = null;
 		if (mbd == null) {
 			object = getCachedObjectForFactoryBean(beanName);  //从factorybean缓存中获取bean,还不是用factorybean创建的

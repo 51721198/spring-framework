@@ -145,9 +145,12 @@ public class XmlBeanFactoryTests {
 		reader.setValidationMode(XmlBeanDefinitionReader.VALIDATION_NONE);
 		reader.loadBeanDefinitions(REFTYPES_CONTEXT);   //load只会注册bean定义,绝对不会实例化bean,todo 到底哪里调的facotorypostprocess,还是说普通beanfactory根本就不没有
 
+		TestBean jenks = (TestBean) xbf.getBean("jenks");
+		//prototype类型bean和sigleton类型bean的最大区别,就是protutype类型的bean不会把自己加到preexposebean的缓存里,不会进行提前曝光
+
 		TestBean emma = (TestBean) xbf.getBean("emma");  //getBean的时候才会实例化bean,千万不要搞错
 		TestBean georgia = (TestBean) xbf.getBean("georgia");
-		ITestBean emmasJenks = emma.getSpouse();
+		ITestBean emmasJenks = emma.getSpouse();      //emma的spouse jenks是个prototype
 		ITestBean georgiasJenks = georgia.getSpouse();
 		assertTrue("Emma and georgia think they have a different boyfriend", emmasJenks != georgiasJenks);
 		assertTrue("Emmas jenks has right name", emmasJenks.getName().equals("Andrew"));
@@ -541,13 +544,13 @@ public class XmlBeanFactoryTests {
 		XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(xbf);
 		reader.setValidationMode(XmlBeanDefinitionReader.VALIDATION_NONE);
 		reader.loadBeanDefinitions(REFTYPES_CONTEXT);
-		TestBean jenny = (TestBean) xbf.getBean("jenny");
-		TestBean david = (TestBean) xbf.getBean("david");
-		TestBean ego = (TestBean) xbf.getBean("ego");
-		TestBean complexInnerEgo = (TestBean) xbf.getBean("complexInnerEgo");
-		TestBean complexEgo = (TestBean) xbf.getBean("complexEgo");
-		assertTrue("Correct circular reference", jenny.getSpouse() == david);
-		assertTrue("Correct circular reference", david.getSpouse() == jenny);
+		TestBean jenny = (TestBean) xbf.getBean("jenny");   //jenny有依赖david
+		TestBean david = (TestBean) xbf.getBean("david");  //david是有依赖jenny的
+		TestBean ego = (TestBean) xbf.getBean("ego");   //ego依赖他自己
+		TestBean complexInnerEgo = (TestBean) xbf.getBean("complexInnerEgo");  //complexInnerEgo依赖一个facotorybean
+		TestBean complexEgo = (TestBean) xbf.getBean("complexEgo"); //依赖egoBridge,而egoBridge又依赖了这个
+		assertTrue("Correct circular reference", jenny.getSpouse() == david);  //jenny的spouse是david
+		assertTrue("Correct circular reference", david.getSpouse() == jenny);  //david的spouse是jenny
 		assertTrue("Correct circular reference", ego.getSpouse() == ego);
 		assertTrue("Correct circular reference", complexInnerEgo.getSpouse().getSpouse() == complexInnerEgo);
 		assertTrue("Correct circular reference", complexEgo.getSpouse().getSpouse() == complexEgo);
