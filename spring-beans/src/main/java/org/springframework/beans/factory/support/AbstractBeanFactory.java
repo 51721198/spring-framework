@@ -240,8 +240,13 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 		Object sharedInstance = getSingleton(beanName);
 
 		if (sharedInstance != null && args == null) {
-			//已经从缓存里面拿到了预创建的singleton bean,这种情况很有可能是循环引用了
+			/**
+			 * 🌈🌈🌈🌈🌈🌈🌈🌈🌈🌈🌈🌈这个sharedInstance真正的作用是缓存,如果A依赖B,我们会先通过递归实例化B,然后B放进缓存,然后A也进缓存
+			 * 后面假如再有getBean(B)的时候就直接是从缓存拿而不是在从头实例化了
+			 */
+			//已经从缓存里面拿到了预创建的singleton bean
 			if (logger.isDebugEnabled()) {
+				//1.缓存中存在 2.bean正在创建中时才能判定出现了循环引用(单有1不能说明是循环引用)
 				if (isSingletonCurrentlyInCreation(beanName)) {
 					logger.debug("🍎检测到有循环引用--->Returning eagerly cached instance of singleton bean '" + beanName +
 							"' that is not fully initialized yet - a consequence of a circular reference");
@@ -250,7 +255,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					logger.debug("Returning cached instance of singleton bean '" + beanName + "'");
 				}
 			}
-			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
+			bean = getObjectForBeanInstance(sharedInstance, name, beanName, null); //1605行调用,主要作用是factoryBean中拿取bean
 		}
 
 		else {
@@ -259,7 +264,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 			//非循环引用的情况下,如果检测到了bean已经在创建中那么直接就抛异常
 			// Fail if we're already creating this bean instance:
 			// We're assumably within a circular reference.
-			if (isPrototypeCurrentlyInCreation(beanName)) {
+			if (isPrototypeCurrentlyInCreation(beanName)) { //prototype就不存在什么允许循环引用了,直接抛异常
 				throw new BeanCurrentlyInCreationException(beanName);
 			}
 
@@ -289,9 +294,10 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 				checkMergedBeanDefinition(mbd, beanName, args);
 
 				// Guarantee initialization of beans that the current bean depends on.
+				//❌❌❌❌❌❌这个dependOn看了半天也不知道到底是干嘛的,注意这里不是解决依赖bean的初始化的,真正解决是在populatebean的时候
 				String[] dependsOn = mbd.getDependsOn();
 				if (dependsOn != null) {
-					for (String dep : dependsOn) {
+					for (String dep : dependsOn) {//这个for循环的真正作用类似树的递归,会由root节点一直到达叶子节点(也就是不存在依赖的节点)
 						if (isDependent(beanName, dep)) {
 
 							//注意了,我们还处在非循环引用的else分支里,这里还是不允许循环引用
@@ -305,13 +311,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 
 				// Create bean instance.
 				if (mbd.isSingleton()) {
+					//回调函数,在getSingleton里面会调到这个getObject()
 					sharedInstance = getSingleton(beanName, new ObjectFactory<Object>() {
 						@Override
 						public Object getObject() throws BeansException {
 							try {
 
-								//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎终于到啦激动人心的创建bean🌶!!!!!
-								return createBean(beanName, mbd, args);  //这里会把创建的bean塞进一个beanfacotry,外层getSingleton又会把拿出来
+								//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎终于到啦激动人心的创建singleTonbean🌶!!!!!
+								return createBean(beanName, mbd, args);
 							}
 							catch (BeansException ex) {
 								// Explicitly remove instance from singleton cache: It might have been put there
@@ -323,7 +330,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 						}
 					});
 					//为什么会有这个,是因为前面返回的sharedInstance很有可能是一个factorybean,如果确实是facotybean那么需要从其中拿到bean
-					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
+					bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd); //调的是1605行
 				}
 
 				else if (mbd.isPrototype()) {  //🍎scope是prototype模式的话,感觉这个过程和singleton的好像并没有什么区别
@@ -331,12 +338,14 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 					Object prototypeInstance = null;
 					try {
 						beforePrototypeCreation(beanName);
+						//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎终于到啦激动人心的创建prototypetypebean🌶!!!!!
 						prototypeInstance = createBean(beanName, mbd, args);
 					}
 					finally {
 						afterPrototypeCreation(beanName);
 					}
-					bean = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
+					//为什么会有这个,是因为前面返回的prototypeInstance很有可能是一个factorybean,如果确实是facotybean那么需要从其中拿到bean
+					bean = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd); //调的是1605行
 				}
 
 				else {//除了singleton和protutype的其他bean类型,也是没有看出来有什么区别
@@ -351,6 +360,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 							public Object getObject() throws BeansException {
 								beforePrototypeCreation(beanName);
 								try {
+									//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎终于到啦激动人心的创建scopebean🌶!!!!!
 									return createBean(beanName, mbd, args);
 								}
 								finally {
@@ -358,7 +368,8 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 								}
 							}
 						});
-						bean = getObjectForBeanInstance(scopedInstance, name, beanName, mbd);
+						//为什么会有这个,是因为前面返回的scopedInstance很有可能是一个factorybean,如果确实是facotybean那么需要从其中拿到bean
+						bean = getObjectForBeanInstance(scopedInstance, name, beanName, mbd); //调的是1605行
 					}
 					catch (IllegalStateException ex) {
 						throw new BeanCreationException(beanName,
@@ -1591,7 +1602,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @param mbd the merged bean definition
 	 * @return the object to expose for the bean
 	 */
-	protected Object getObjectForBeanInstance(
+	protected Object getObjectForBeanInstance(  //普通bean直接返回,factoryBean调用其getBean方法
 			Object beanInstance, String name, String beanName, RootBeanDefinition mbd) {
 
 		// Don't let calling code try to dereference the factory if the bean isn't a factory.

@@ -485,7 +485,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		try {
 
-			//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎创建bean的主逻辑入口在这里!!
+			//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎创建bean的主逻辑入口在这里!!bean依赖bean的创建也是在这里面(bean属性填充的时候)
 			Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Finished creating instance of bean '" + beanName + "'");
@@ -562,7 +562,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 				logger.debug("Eagerly caching bean '" + beanName +
 						"' to allow for resolving potential circular references");
 			}
-			addSingletonFactory(beanName, new ObjectFactory<Object>() {  //把刚创建出来的bean塞到一个factorybean里面,然后把factorybean塞到缓存
+			addSingletonFactory(beanName, new ObjectFactory<Object>() {  //又是一个回调函数
 				@Override                                              //如果循环引用,拿到的就是依赖bean的facotorybean吗?
 				public Object getObject() throws BeansException {
 					//spring的aop就是这里将advice动态织入bean中,若没有则直接返回bean,不做任何处理
@@ -1228,6 +1228,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			return;
 		}
 
+		//这里一般会进去哪一个分支了?还需要仔细看下
 		if (mbd.getResolvedAutowireMode() == RootBeanDefinition.AUTOWIRE_BY_NAME ||
 				mbd.getResolvedAutowireMode() == RootBeanDefinition.AUTOWIRE_BY_TYPE) {
 			MutablePropertyValues newPvs = new MutablePropertyValues(pvs);
@@ -1517,13 +1518,15 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		// Create a deep copy, resolving any references for values.
 		List<PropertyValue> deepCopy = new ArrayList<>(original.size());
 		boolean resolveNecessary = false;
-		for (PropertyValue pv : original) {
+		for (PropertyValue pv : original) {   //这个for循环控制了树的递归,A -> B,在填充属性B的时候会跳到createBean那边去
 			if (pv.isConverted()) {
 				deepCopy.add(pv);
 			}
 			else {
 				String propertyName = pv.getName();
 				Object originalValue = pv.getValue();
+
+				//🍎🍎🍎🍎🍎🍎🍎🍎如果有A 依赖于 B的,那么B的实例化是从这里进去的!!!!!!!!1
 				Object resolvedValue = valueResolver.resolveValueIfNecessary(pv, originalValue);
 				Object convertedValue = resolvedValue;
 				boolean convertible = bw.isWritableProperty(propertyName) &&
@@ -1620,7 +1623,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		try {
 			//🍎🍎🍎🍎🍎定义了Initmethod的,调用逻辑是在这里
-			invokeInitMethods(beanName, wrappedBean, mbd);
+			invokeInitMethods(beanName, wrappedBean, mbd);  //如果实现了initializingBean接口的话,@PostConstruct注解也是在这里调用的
 		}
 		catch (Throwable ex) {
 			throw new BeanCreationException(

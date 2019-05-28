@@ -107,7 +107,7 @@ public abstract class FactoryBeanRegistrySupport extends DefaultSingletonBeanReg
 					object = doGetObjectFromFactoryBean(factory, beanName);
 					// Only post-process and store if not put there already during getObject() call above
 					// (e.g. because of circular reference processing triggered by custom getBean calls)
-					Object alreadyThere = this.factoryBeanObjectCache.get(beanName); //单例工厂创建的bean也是有缓存的,反正他妈到处都是缓存
+					Object alreadyThere = this.factoryBeanObjectCache.get(beanName); //这里他妈又从缓存中取一次,明明前面已经取过而且是空的
 					if (alreadyThere != null) {
 						object = alreadyThere; //如果有缓存那么用缓存里面的,难以理解,注释说是为了做循环引用的
 						//alreadyThere和object的区别就是alreadythere已经是做过后处理了,所以这里直接返回,不需要再后处理一次了
