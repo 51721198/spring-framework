@@ -485,7 +485,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 
 		try {
 
-			//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎创建bean的主逻辑入口在这里!!bean依赖bean的创建也是在这里面(bean属性填充的时候)
+			//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎重要逻辑入口:1.实例化 2.populate bean!!(依赖bean的递归入口)
 			Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Finished creating instance of bean '" + beanName + "'");
@@ -529,7 +529,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			instanceWrapper = this.factoryBeanInstanceCache.remove(beanName);   //单例bean直接从缓存中返回,注意返回后,缓存中就不存在了
 		}
 		if (instanceWrapper == null) {
-			//🍎🍎🍎🍎🍎🍎🍎🍎重要逻辑入口!!!!!这步完了bean就已经实例化完毕了,但是filed还没有赋值,只是构造函数的参数赋值了
+			//🚀调用构造方法实例化空白bean,这步完了bean就已经实例化完毕了,但是filed还没有赋值,只是构造函数的参数赋值了
 			// 根据指定bean使用对应的策略创建新的实例,如:工厂方法,构造函数自动注入,简单初始化
 			instanceWrapper = createBeanInstance(beanName, mbd, args);
 		}
@@ -557,11 +557,12 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		boolean earlySingletonExposure = (mbd.isSingleton() && this.allowCircularReferences &&
 				isSingletonCurrentlyInCreation(beanName));
 		if (earlySingletonExposure) {
-			//🍎🍎🍎🍎🍎🍎 A -> B,如果B -> A循环引用了,那么构建A时一定能够进到这个逻辑里面来
 			if (logger.isDebugEnabled()) {
 				logger.debug("Eagerly caching bean '" + beanName +
 						"' to allow for resolving potential circular references");
 			}
+			//🍎🍎🍎🍎🍎🍎 A -> B,如果B -> A循环引用了,那么构建A时一定能够进到这个逻辑里面来
+			//重要回调逻辑,这里会把这个回调方法注册到一个缓存里面,在doGetbean开始处有一个地方会进到这个回调里面,这个设计太牛逼了
 			addSingletonFactory(beanName, new ObjectFactory<Object>() {  //又是一个回调函数
 				@Override                                              //如果循环引用,拿到的就是依赖bean的facotorybean吗?
 				public Object getObject() throws BeansException {

@@ -189,7 +189,7 @@ public class DefaultSingletonBeanRegistry extends SimpleAliasRegistry implements
 				if (singletonObject == null && allowEarlyReference) {  //允许早引用意味着允许循环引用
 					ObjectFactory<?> singletonFactory = this.singletonFactories.get(beanName);  //singletonFactories就是用来解决循环引用的
 					if (singletonFactory != null) {  //beanName  -> Objfactory 的map
-						singletonObject = singletonFactory.getObject();   //factoryBean要通过getObj才能获取到bean,这里如果为null了
+						singletonObject = singletonFactory.getObject();   //factoryBean要通过getObj才能获取到bean,这里如果为null了,这里会进入回调方法
 						this.earlySingletonObjects.put(beanName, singletonObject);
 						this.singletonFactories.remove(beanName);   //为什么这里是remove了?🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎这里严重没弄明白!!!!
 					}
