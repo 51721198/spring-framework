@@ -170,7 +170,7 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 
 		logger.info("🚀🍎---->开始parseBeanDefinitions🌶!!!!!----->BeandefinitionDocumentReader::parseBeanDefinitions");
 
-		//有个问题,他这个root有可能子节点还有子节点,这里为啥不递归了???
+		//有个问题,他这个root有可能子节点还有子节点,这里为啥不递归了???下面的parse里面会有递归的
 		if (delegate.isDefaultNamespace(root)) {
 			NodeList nl = root.getChildNodes();
 

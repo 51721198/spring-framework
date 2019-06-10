@@ -514,37 +514,41 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 			//到此为止所有的xml配置文件都已经加载和解析完毕
 
 			// Prepare the bean factory for use in this context.
-			//spring对beanfacotory的扩展均由此处展开
+			//spring对beanfacotory的扩展均由此处展开,这里面也有addBeanPostProcessor的逻辑!!!!注意了
 			prepareBeanFactory(beanFactory);
 
 			try {
-				// Allows post-processing of the bean factory in context subclasses.
-				//注意了啊,这个ProcessBeanFactory只有在applicationcontext里面才会调到,如果是beanfactory根本就不会调到这里
-				//但是对于后面的postbeanfactory来说,两种beanfacotory都是会调到的,这里体现了applicationcontext相比于beanfacotory更加强的扩展性能
+				// Allows post-processing of the bean factory in context subclasses.这里面可能是注册操作
 				postProcessBeanFactory(beanFactory);
 				// Invoke factory processors registered as beans in the context.
+				//注意了啊,这个ProcessBeanFactory只有在applicationcontext里面才会调到,如果是beanfactory根本就不会调到这里
+				//但是对于后面的postbeanfactory来说,两种beanfacotory都是会调到的,这里体现了applicationcontext相比于beanfacotory更加强的扩展性能
+				//🚀beanFactory里面的是beanPostProcessors的集合
+				//🚀但是applicationcontext里面的是这个beanFactoryPostProcessors集合,这是beanFactory不能进行bean定义处理的根本原因
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				//beanPostProcessor相关注册工作在这里进行,但是调用后处理器是在后面的finishBeanFactoryInitialization里面进行的
+				//注解处理器也是在registerBeanPostProcessors(beanFactory);中进行实例化的：
 				registerBeanPostProcessors(beanFactory);
 
-				// Initialize message source for this context.
+				// Initialize message source for this context.国际化相关的工作在这里面进行
 				initMessageSource();
 
-				// Initialize event multicaster for this context.
+				// Initialize event multicaster for this context.初始化事件广播器
 				initApplicationEventMulticaster();
 
-				// Initialize other special beans in specific context subclasses.
+				// Initialize other special beans in specific context subclasses.这个是个钩子函数,留给子类实现的
 				onRefresh();
 
-				// Check for listener beans and register them.
+				// Check for listener beans and register them.注册事件监听器
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
-				//xml文件中定义的所有的bean都是在这步里面进行实例化的需要自己的进行研究!
+				//xml文件中定义的所有的bean都是在这步里面进行实例化的需要自己的进行研究!这里会初始化所有的singleton beans,但是lazy的除外
 				finishBeanFactoryInitialization(beanFactory);
 
-				// Last step: publish corresponding event.
+				// Last step: publish corresponding event.广播事件,applicationcontext初始化完成
 				finishRefresh();
 			}
 
@@ -691,6 +695,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * <p>Must be called before singleton instantiation.
 	 */
 	protected void invokeBeanFactoryPostProcessors(ConfigurableListableBeanFactory beanFactory) {
+		//🍎🍎🍎🍎🍎🍎🍎🍎这里会完成扫描+调用的工作,进去吧
 		PostProcessorRegistrationDelegate.invokeBeanFactoryPostProcessors(beanFactory, getBeanFactoryPostProcessors());
 
 		// Detect a LoadTimeWeaver and prepare for weaving, if found in the meantime

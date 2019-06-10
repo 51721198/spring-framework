@@ -56,7 +56,7 @@ public class BeanFactoryPostProcessorTests {
 		ac.registerSingleton("tb1", TestBean.class);
 		ac.registerSingleton("tb2", TestBean.class);
 		TestBeanFactoryPostProcessor bfpp = new TestBeanFactoryPostProcessor();
-		ac.addBeanFactoryPostProcessor(bfpp);
+		ac.addBeanFactoryPostProcessor(bfpp);   //通过这种直接add的方式,applicationContext的beanFactoryPostProcessors直接会有值
 		assertFalse(bfpp.wasCalled);
 		ac.refresh();
 		assertTrue(bfpp.wasCalled);
@@ -67,6 +67,8 @@ public class BeanFactoryPostProcessorTests {
 		StaticApplicationContext ac = new StaticApplicationContext();
 		ac.registerSingleton("tb1", TestBean.class);
 		ac.registerSingleton("tb2", TestBean.class);
+
+		//通过扫描方式获取后处理器,applicationContext的beanFactoryPostProcessors始终不会有值
 		ac.registerSingleton("bfpp", TestBeanFactoryPostProcessor.class);
 		ac.refresh();
 		TestBeanFactoryPostProcessor bfpp = (TestBeanFactoryPostProcessor) ac.getBean("bfpp");

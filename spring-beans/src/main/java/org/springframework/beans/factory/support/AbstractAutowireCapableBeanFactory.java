@@ -578,7 +578,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			//🍎🍎🍎🍎🍎🍎🍎🍎🍎重要逻辑入口:对bean进行填充,将各个属性值注入,其中,可能存在依赖于其他bean的属性,则会递归初始化依赖bean
 			populateBean(beanName, mbd, instanceWrapper);
 			if (exposedObject != null) {
-				//🍎🍎🍎🍎🍎🍎🍎🍎🍎重要逻辑入口,调用初始化方法beanpostprocess,init-method,各种aware接口的填充都是在这个里面
+				//🍎🍎🍎🍎🍎🍎🍎🍎🍎重要逻辑入口,调用初始化方法beanPostProcess,init-method,各种aware接口的填充都是在这个里面
 				exposedObject = initializeBean(beanName, exposedObject, mbd);
 			}
 		}
