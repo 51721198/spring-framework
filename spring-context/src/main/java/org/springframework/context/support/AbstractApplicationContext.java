@@ -511,15 +511,16 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 			// Tell the subclass to refresh the internal bean factory.
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
-			//到此为止所有的xml配置文件都已经加载和解析完毕
+			//到此为止所有的xml配置文件都已经加载和解析完毕,是的,再次确认这里面已经搞完xml解析和bean定义注册了
 
 			// Prepare the bean factory for use in this context.
 			//spring对beanfacotory的扩展均由此处展开,这里面也有addBeanPostProcessor的逻辑!!!!注意了
 			prepareBeanFactory(beanFactory);
 
 			try {
-				// Allows post-processing of the bean factory in context subclasses.这里面可能是注册操作
+				// Allows post-processing of the bean factory in context subclasses.留给子类覆盖,添加特殊功能
 				postProcessBeanFactory(beanFactory);
+
 				// Invoke factory processors registered as beans in the context.
 				//注意了啊,这个ProcessBeanFactory只有在applicationcontext里面才会调到,如果是beanfactory根本就不会调到这里
 				//但是对于后面的postbeanfactory来说,两种beanfacotory都是会调到的,这里体现了applicationcontext相比于beanfacotory更加强的扩展性能
@@ -541,11 +542,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 				// Initialize other special beans in specific context subclasses.这个是个钩子函数,留给子类实现的
 				onRefresh();
 
-				// Check for listener beans and register them.注册事件监听器
+				// Check for listener beans and register them.注册事件监听器,这里面已经有一部分广播的事件了.
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
-				//xml文件中定义的所有的bean都是在这步里面进行实例化的需要自己的进行研究!这里会初始化所有的singleton beans,但是lazy的除外
+				//🍎🍎🍎🍎🍎🍎🍎🍎🍎xml文件中定义的所有的bean都是在这步里面进行实例化的需要自己的进行研究!这里会初始化所有的singleton beans,但是lazy的除外
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.广播事件,applicationcontext初始化完成
@@ -854,6 +855,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Register a default embedded value resolver if no bean post-processor
 		// (such as a PropertyPlaceholderConfigurer bean) registered any before:
 		// at this point, primarily for resolution in annotation attribute values.
+		//如果忘了提供类似PropertyPlaceholderConfigurer这样的属性解析器,那么这么会给个默认的,不过这个默认的主要是用来解析注解中的值
 		if (!beanFactory.hasEmbeddedValueResolver()) {
 			beanFactory.addEmbeddedValueResolver(new StringValueResolver() {
 				@Override
@@ -866,7 +868,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		// Initialize LoadTimeWeaverAware beans early to allow for registering their transformers early.
 		String[] weaverAwareNames = beanFactory.getBeanNamesForType(LoadTimeWeaverAware.class, false, false);
 		for (String weaverAwareName : weaverAwareNames) {
-			getBean(weaverAwareName);
+			getBean(weaverAwareName);   //这里get的bean类型比较特殊
 		}
 
 		// Stop using the temporary ClassLoader for type matching.
@@ -876,6 +878,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		beanFactory.freezeConfiguration();
 
 		// Instantiate all remaining (non-lazy-init) singletons.
+		//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎重要逻辑入口,getBean入口在这里面!!!!!!!!
 		beanFactory.preInstantiateSingletons();
 	}
 

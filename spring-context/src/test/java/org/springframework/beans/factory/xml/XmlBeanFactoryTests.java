@@ -38,6 +38,7 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.MethodReplacer;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.context.support.BeanFactoryPostProcessorTests;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.UrlResource;
@@ -158,6 +159,12 @@ public class XmlBeanFactoryTests {
 		assertTrue("Georgias jenks has right name", emmasJenks.getName().equals("Andrew"));
 		assertTrue("They are object equal", emmasJenks.equals(georgiasJenks));
 		assertTrue("They object equal direct ref", emmasJenks.equals(xbf.getBean("jenks")));
+
+
+		xbf.registerSingleton("bfpp", BeanFactoryPostProcessorTests.TestBeanFactoryPostProcessor.class);
+//		xbf.refresh();
+		BeanFactoryPostProcessorTests.TestBeanFactoryPostProcessor bfpp = (BeanFactoryPostProcessorTests.TestBeanFactoryPostProcessor) xbf.getBean("bfpp");
+		assertTrue(bfpp.wasCalled);
 	}
 
 	@Test
