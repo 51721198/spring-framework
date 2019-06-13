@@ -739,10 +739,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 
 		// Trigger initialization of all non-lazy singleton beans...
 		//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎重要逻辑入口:getBean()
-		for (String beanName : beanNames) {
+		for (String beanName : beanNames) {  //非懒加载的bean在这里都会被实例化
 			RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
-			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
-				if (isFactoryBean(beanName)) {
+			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) { //三个条件才会被实例化: 1.非抽象 2.是单例bean 3.非懒加载
+				if (isFactoryBean(beanName)) {  //如果是facotorybean的话,
 					final FactoryBean<?> factory = (FactoryBean<?>) getBean(FACTORY_BEAN_PREFIX + beanName);
 					boolean isEagerInit;
 					if (System.getSecurityManager() != null && factory instanceof SmartFactoryBean) {
@@ -755,10 +755,10 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					}
 					else {
 						isEagerInit = (factory instanceof SmartFactoryBean &&
-								((SmartFactoryBean<?>) factory).isEagerInit());
+								((SmartFactoryBean<?>) factory).isEagerInit());  //SmartFactoryBean主要是给spring框架自用的,外部一般不会用到
 					}
-					if (isEagerInit) {
-						getBean(beanName);
+					if (isEagerInit) {   //如果不是eagerInit的话就不会被实例化
+						getBean(beanName);  //这里是从factoryBean里面获取bean,这里不会重复吗??上边都拿到factorybean了,为什么这里还要get一次
 					}
 				}
 				else {
@@ -768,6 +768,7 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 		}
 
 		// Trigger post-initialization callback for all applicable beans...
+		//这里也有一个类似于后处理器的东西
 		for (String beanName : beanNames) {
 			Object singletonInstance = getSingleton(beanName);
 			if (singletonInstance instanceof SmartInitializingSingleton) {

@@ -16,6 +16,13 @@
 
 package org.springframework.context.index;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.core.SpringProperties;
+import org.springframework.core.io.UrlResource;
+import org.springframework.core.io.support.PropertiesLoaderUtils;
+import org.springframework.util.ConcurrentReferenceHashMap;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -23,14 +30,6 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentMap;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.springframework.core.SpringProperties;
-import org.springframework.core.io.UrlResource;
-import org.springframework.core.io.support.PropertiesLoaderUtils;
-import org.springframework.util.ConcurrentReferenceHashMap;
 
 /**
  * Candidate components index loading mechanism for internal use within the framework.
@@ -65,7 +64,7 @@ public class CandidateComponentsIndexLoader {
 	public static final String COMPONENTS_RESOURCE_LOCATION = "META-INF/spring.components";
 
 	private static final ConcurrentMap<ClassLoader, CandidateComponentsIndex> cache
-			= new ConcurrentReferenceHashMap<>();
+			= new ConcurrentReferenceHashMap<>();   //ConcurrentReferenceHashMap的默认引用级别是软引用,如果key或者value被置null则gc后数据会被清除
 
 
 	/**
@@ -82,7 +81,7 @@ public class CandidateComponentsIndexLoader {
 		if (classLoaderToUse == null) {
 			classLoaderToUse = CandidateComponentsIndexLoader.class.getClassLoader();
 		}
-		return cache.computeIfAbsent(classLoaderToUse, CandidateComponentsIndexLoader::doLoadIndex);
+		return cache.computeIfAbsent(classLoaderToUse, CandidateComponentsIndexLoader::doLoadIndex);  //cache也是静态的,所以这里能访问
 	}
 
 	private static CandidateComponentsIndex doLoadIndex(ClassLoader classLoader) {

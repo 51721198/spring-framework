@@ -77,16 +77,19 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 
 	@Override
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
+		//🍎🍎🍎🍎🍎🍎🍎🍎重要逻辑入口,@Autowire,@Resource等注解的开关入口
+
 		String basePackage = element.getAttribute(BASE_PACKAGE_ATTRIBUTE);
 		basePackage = parserContext.getReaderContext().getEnvironment().resolvePlaceholders(basePackage);
 		String[] basePackages = StringUtils.tokenizeToStringArray(basePackage,
 				ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);
 
 		// Actually scan for bean definitions and register them.
-		ClassPathBeanDefinitionScanner scanner = configureScanner(parserContext, element);
+		ClassPathBeanDefinitionScanner scanner = configureScanner(parserContext, element);  //对scanner进行配置
 		Set<BeanDefinitionHolder> beanDefinitions = scanner.doScan(basePackages);
 
 		//感觉只是注册了bean定义,并没有实例化bean,实例化bean还是在其他的地方进行的
+		//🍎🍎🍎🍎🍎🍎🍎🍎重要逻辑入口,这里面会注册一些处理@component等注解的postProcessor
 		registerComponents(parserContext.getReaderContext(), beanDefinitions, element);
 
 		return null;
@@ -100,6 +103,8 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 
 		// Delegate bean definition registration to scanner class.
 		ClassPathBeanDefinitionScanner scanner = createScanner(parserContext.getReaderContext(), useDefaultFilters);
+
+		//spring indexer功能,基本没啥用,这里面不会扫描@component的bean,不用看了
 		scanner.setResourceLoader(parserContext.getReaderContext().getResourceLoader());
 		scanner.setEnvironment(parserContext.getReaderContext().getEnvironment());
 		scanner.setBeanDefinitionDefaults(parserContext.getDelegate().getBeanDefinitionDefaults());
@@ -110,20 +115,20 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 		}
 
 		try {
-			parseBeanNameGenerator(element, scanner);
+			parseBeanNameGenerator(element, scanner);  //set beanNameGenerator
 		}
 		catch (Exception ex) {
 			parserContext.getReaderContext().error(ex.getMessage(), parserContext.extractSource(element), ex.getCause());
 		}
 
 		try {
-			parseScope(element, scanner);
+			parseScope(element, scanner);   //scanner添加setScopedProxyMode
 		}
 		catch (Exception ex) {
 			parserContext.getReaderContext().error(ex.getMessage(), parserContext.extractSource(element), ex.getCause());
 		}
 
-		parseTypeFilters(element, scanner, parserContext);
+		parseTypeFilters(element, scanner, parserContext);  //scanner 添加过滤器filter
 
 		return scanner;
 	}
@@ -148,6 +153,7 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 			annotationConfig = Boolean.valueOf(element.getAttribute(ANNOTATION_CONFIG_ATTRIBUTE));
 		}
 		if (annotationConfig) {
+			//🍎🍎🍎🍎🍎🍎🍎🍎重要逻辑入口,这里面会注册一些处理@component等注解的postProcessor
 			Set<BeanDefinitionHolder> processorDefinitions =
 					AnnotationConfigUtils.registerAnnotationConfigProcessors(readerContext.getRegistry(), source);
 			for (BeanDefinitionHolder processorDefinition : processorDefinitions) {

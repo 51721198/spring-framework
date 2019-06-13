@@ -229,6 +229,7 @@ public abstract class AbstractBeanFactory extends FactoryBeanRegistrySupport imp
 	 * @throws BeansException if the bean could not be created
 	 */
 	@SuppressWarnings("unchecked")
+	//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎这个doGetBean是能够返回一个FacotoryBean的
 	protected <T> T doGetBean(
 			final String name, final Class<T> requiredType, final Object[] args, boolean typeCheckOnly)
 			throws BeansException {

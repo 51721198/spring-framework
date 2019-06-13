@@ -185,13 +185,14 @@ public class DefaultBeanDefinitionDocumentReader implements BeanDefinitionDocume
 						parseDefaultElement(ele, delegate);
 					}
 					else {
+						//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎  compont-scan, tx, annotation-config等标签的解析走这里
 						delegate.parseCustomElement(ele);  //delegate解析器是什么鬼了?
 					}
 				}
 			}
 		}
 		else {
-			delegate.parseCustomElement(root);
+			delegate.parseCustomElement(root);// 这里进去是解析自定义的元素,比如aop,tx(事务)等都是在这里面解析的
 		}
 	}
 

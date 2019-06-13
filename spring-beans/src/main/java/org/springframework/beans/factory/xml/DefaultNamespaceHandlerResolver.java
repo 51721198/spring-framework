@@ -16,20 +16,19 @@
 
 package org.springframework.beans.factory.xml;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.FatalBeanException;
 import org.springframework.core.io.support.PropertiesLoaderUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.CollectionUtils;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Default implementation of the {@link NamespaceHandlerResolver} interface.
@@ -122,14 +121,14 @@ public class DefaultNamespaceHandlerResolver implements NamespaceHandlerResolver
 		else {
 			String className = (String) handlerOrClassName;
 			try {
-				Class<?> handlerClass = ClassUtils.forName(className, this.classLoader);
-				if (!NamespaceHandler.class.isAssignableFrom(handlerClass)) {
+				Class<?> handlerClass = ClassUtils.forName(className, this.classLoader);  //加载自定义标签解析class
+				if (!NamespaceHandler.class.isAssignableFrom(handlerClass)) {   //校验加载的class文件
 					throw new FatalBeanException("Class [" + className + "] for namespace [" + namespaceUri +
 							"] does not implement the [" + NamespaceHandler.class.getName() + "] interface");
 				}
-				NamespaceHandler namespaceHandler = (NamespaceHandler) BeanUtils.instantiateClass(handlerClass);
-				namespaceHandler.init();
-				handlerMappings.put(namespaceUri, namespaceHandler);
+				NamespaceHandler namespaceHandler = (NamespaceHandler) BeanUtils.instantiateClass(handlerClass);  //实例化解析器
+				namespaceHandler.init();  //初始化解析器
+				handlerMappings.put(namespaceUri, namespaceHandler);  //把解析器放进缓存里
 				return namespaceHandler;
 			}
 			catch (ClassNotFoundException ex) {

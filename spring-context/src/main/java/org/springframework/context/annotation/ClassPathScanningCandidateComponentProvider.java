@@ -16,17 +16,8 @@
 
 package org.springframework.context.annotation;
 
-import java.io.IOException;
-import java.lang.annotation.Annotation;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.annotation.AnnotatedGenericBeanDefinition;
@@ -57,6 +48,14 @@ import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
+
+import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * A component provider that provides candidate components from a base package. Can
@@ -148,6 +147,7 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	public void setResourceLoader(ResourceLoader resourceLoader) {
 		this.resourcePatternResolver = ResourcePatternUtils.getResourcePatternResolver(resourceLoader);
 		this.metadataReaderFactory = new CachingMetadataReaderFactory(resourceLoader);
+		//spring indexer功能,基本没啥用,这里面不会扫描@component的bean,不用看了
 		this.componentsIndex = CandidateComponentsIndexLoader.loadIndex(resourceLoader.getClassLoader());
 	}
 
@@ -281,9 +281,10 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 */
 	public Set<BeanDefinition> findCandidateComponents(String basePackage) {
 		if (isIndexSupported()) {
-			return addCandidateComponentsFromIndex(basePackage);
+			return addCandidateComponentsFromIndex(basePackage);   //spring index技术,不用浪费时间看了
 		}
 		else {
+			//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎重要逻辑入口
 			return scanCandidateComponents(basePackage);
 		}
 	}
@@ -302,11 +303,13 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 			boolean traceEnabled = logger.isTraceEnabled();
 			boolean debugEnabled = logger.isDebugEnabled();
 			for (String type : types) {
+
+				//MetadataReader这个reader底层采用asm而不是反射,其实就是读取class文件
 				MetadataReader metadataReader = this.metadataReaderFactory.getMetadataReader(type);
 				if (isCandidateComponent(metadataReader)) {
 					AnnotatedGenericBeanDefinition sbd = new AnnotatedGenericBeanDefinition(
-							metadataReader.getAnnotationMetadata());
-					if (isCandidateComponent(sbd)) {
+							metadataReader.getAnnotationMetadata()); //利用reader读取所有注解
+					if (isCandidateComponent(sbd)) {   //是否非抽象(接口,抽象类) && 是否有子类覆盖 才有资格加进来
 						if (debugEnabled) {
 							logger.debug("Using candidate component class from index: " + type);
 						}
