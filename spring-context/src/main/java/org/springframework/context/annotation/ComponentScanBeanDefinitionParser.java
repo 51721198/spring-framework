@@ -77,7 +77,9 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 
 	@Override
 	public BeanDefinition parse(Element element, ParserContext parserContext) {
+		//如果想要使用Spring注解，那么首先要在配置文件中配置context:component-scan标签或者在配置类中添加@ComponentScan注解
 		//🍎🍎🍎🍎🍎🍎🍎🍎重要逻辑入口,@Autowire,@Resource等注解的开关入口
+		//注意:</context:component-scan>元素中默认配置了annotation-config,所以不需要再单独配置</annotation-config>元素.
 
 		String basePackage = element.getAttribute(BASE_PACKAGE_ATTRIBUTE);
 		basePackage = parserContext.getReaderContext().getEnvironment().resolvePlaceholders(basePackage);
@@ -128,12 +130,14 @@ public class ComponentScanBeanDefinitionParser implements BeanDefinitionParser {
 			parserContext.getReaderContext().error(ex.getMessage(), parserContext.extractSource(element), ex.getCause());
 		}
 
+		//🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎🍎重要逻辑入口:这里添加的filter将会直接影响后续scan操作的结果,关键是得搞懂这个filter到底啥样
 		parseTypeFilters(element, scanner, parserContext);  //scanner 添加过滤器filter
 
 		return scanner;
 	}
 
 	protected ClassPathBeanDefinitionScanner createScanner(XmlReaderContext readerContext, boolean useDefaultFilters) {
+		//这里面会把@component等一些注解加到scanner的filter里面
 		return new ClassPathBeanDefinitionScanner(readerContext.getRegistry(), useDefaultFilters);
 	}
 

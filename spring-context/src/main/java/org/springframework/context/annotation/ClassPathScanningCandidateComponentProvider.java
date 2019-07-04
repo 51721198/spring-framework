@@ -253,7 +253,7 @@ public class ClassPathScanningCandidateComponentProvider implements EnvironmentC
 	 */
 	@SuppressWarnings("unchecked")
 	protected void registerDefaultFilters() {
-		this.includeFilters.add(new AnnotationTypeFilter(Component.class));
+		this.includeFilters.add(new AnnotationTypeFilter(Component.class));   //@component注解在这里就被列到filter里面去了
 		ClassLoader cl = ClassPathScanningCandidateComponentProvider.class.getClassLoader();
 		try {
 			this.includeFilters.add(new AnnotationTypeFilter(
