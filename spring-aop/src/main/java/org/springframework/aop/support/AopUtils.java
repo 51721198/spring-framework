@@ -16,15 +16,6 @@
 
 package org.springframework.aop.support;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
-import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
-
 import org.springframework.aop.Advisor;
 import org.springframework.aop.AopInvocationException;
 import org.springframework.aop.IntroductionAdvisor;
@@ -39,6 +30,15 @@ import org.springframework.core.MethodIntrospector;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Utility methods for AOP support code.
@@ -293,10 +293,12 @@ public abstract class AopUtils {
 	 * (may be the incoming List as-is)
 	 */
 	public static List<Advisor> findAdvisorsThatCanApply(List<Advisor> candidateAdvisors, Class<?> clazz) {
+		//主要功能是寻找所有增强器中适用于当前class的增强器.引介增强与普通增强的处理是不一样的,所以分开处理.
 		if (candidateAdvisors.isEmpty()) {
 			return candidateAdvisors;
 		}
 		List<Advisor> eligibleAdvisors = new LinkedList<>();
+		//  首先处理引介增强
 		for (Advisor candidate : candidateAdvisors) {
 			if (candidate instanceof IntroductionAdvisor && canApply(candidate, clazz)) {
 				eligibleAdvisors.add(candidate);
@@ -304,10 +306,12 @@ public abstract class AopUtils {
 		}
 		boolean hasIntroductions = !eligibleAdvisors.isEmpty();
 		for (Advisor candidate : candidateAdvisors) {
+			//印介增强已经被处理
 			if (candidate instanceof IntroductionAdvisor) {
 				// already processed
 				continue;
 			}
+			//对于普通bean的处理
 			if (canApply(candidate, clazz, hasIntroductions)) {
 				eligibleAdvisors.add(candidate);
 			}

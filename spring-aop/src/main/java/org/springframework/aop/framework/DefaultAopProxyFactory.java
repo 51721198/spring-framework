@@ -16,10 +16,10 @@
 
 package org.springframework.aop.framework;
 
+import org.springframework.aop.SpringProxy;
+
 import java.io.Serializable;
 import java.lang.reflect.Proxy;
-
-import org.springframework.aop.SpringProxy;
 
 /**
  * Default {@link AopProxyFactory} implementation, creating either a CGLIB proxy
@@ -55,9 +55,9 @@ public class DefaultAopProxyFactory implements AopProxyFactory, Serializable {
 						"Either an interface or a target is required for proxy creation.");
 			}
 			if (targetClass.isInterface() || Proxy.isProxyClass(targetClass)) {
-				return new JdkDynamicAopProxy(config);
+				return new JdkDynamicAopProxy(config);    //如果目标类是接口那么使用jdk的动态代理
 			}
-			return new ObjenesisCglibAopProxy(config);
+			return new ObjenesisCglibAopProxy(config);   //否则使用cglib的代理,再次复习,cglib的底层是利用asm技术实现的
 		}
 		else {
 			return new JdkDynamicAopProxy(config);

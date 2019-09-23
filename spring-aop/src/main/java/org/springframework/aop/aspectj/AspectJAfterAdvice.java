@@ -16,13 +16,12 @@
 
 package org.springframework.aop.aspectj;
 
-import java.io.Serializable;
-import java.lang.reflect.Method;
-
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-
 import org.springframework.aop.AfterAdvice;
+
+import java.io.Serializable;
+import java.lang.reflect.Method;
 
 /**
  * Spring AOP advice wrapping an AspectJ after advice method.
@@ -43,10 +42,13 @@ public class AspectJAfterAdvice extends AbstractAspectJAdvice
 
 	@Override
 	public Object invoke(MethodInvocation mi) throws Throwable {
+		//前置增强里面是没有invoke的,在它的父类MethodBeforeAdviceInterceptor里面有invoke,但是
+		//这里的后置增强自己就带有invoke方法,直接在这里进行拦截
+
 		try {
 			return mi.proceed();
 		}
-		finally {
+		finally {  //后置增强是通过finally进行调用的吗,这也太浪了
 			invokeAdviceMethod(getJoinPointMatch(), null, null);
 		}
 	}

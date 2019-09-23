@@ -16,14 +16,8 @@
 
 package org.springframework.aop.aspectj.annotation;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.Serializable;
-import java.lang.reflect.Method;
-
 import org.aopalliance.aop.Advice;
 import org.aspectj.lang.reflect.PerClauseKind;
-
 import org.springframework.aop.Pointcut;
 import org.springframework.aop.aspectj.AspectJExpressionPointcut;
 import org.springframework.aop.aspectj.AspectJPrecedenceInformation;
@@ -31,6 +25,11 @@ import org.springframework.aop.aspectj.InstantiationModelAwarePointcutAdvisor;
 import org.springframework.aop.aspectj.annotation.AbstractAspectJAdvisorFactory.AspectJAnnotation;
 import org.springframework.aop.support.DynamicMethodMatcherPointcut;
 import org.springframework.aop.support.Pointcuts;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
+import java.lang.reflect.Method;
 
 /**
  * Internal implementation of AspectJPointcutAdvisor.
@@ -77,7 +76,7 @@ class InstantiationModelAwarePointcutAdvisorImpl
 			Method aspectJAdviceMethod, AspectJAdvisorFactory aspectJAdvisorFactory,
 			MetadataAwareAspectInstanceFactory aspectInstanceFactory, int declarationOrder, String aspectName) {
 
-		this.declaredPointcut = declaredPointcut;
+		this.declaredPointcut = declaredPointcut;  //切点
 		this.declaringClass = aspectJAdviceMethod.getDeclaringClass();
 		this.methodName = aspectJAdviceMethod.getName();
 		this.parameterTypes = aspectJAdviceMethod.getParameterTypes();
@@ -87,7 +86,7 @@ class InstantiationModelAwarePointcutAdvisorImpl
 		this.declarationOrder = declarationOrder;
 		this.aspectName = aspectName;
 
-		if (aspectInstanceFactory.getAspectMetadata().isLazilyInstantiated()) {
+		if (aspectInstanceFactory.getAspectMetadata().isLazilyInstantiated()) {  //懒加载的类要进行延迟增强????
 			// Static part of the pointcut is a lazy type.
 			Pointcut preInstantiationPointcut = Pointcuts.union(
 					aspectInstanceFactory.getAspectMetadata().getPerClausePointcut(), this.declaredPointcut);
@@ -100,10 +99,11 @@ class InstantiationModelAwarePointcutAdvisorImpl
 			this.lazy = true;
 		}
 		else {
+			//这边是主逻辑 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
 			// A singleton aspect.
 			this.pointcut = this.declaredPointcut;
 			this.lazy = false;
-			this.instantiatedAdvice = instantiateAdvice(this.declaredPointcut);
+			this.instantiatedAdvice = instantiateAdvice(this.declaredPointcut);  //实例化增强器
 		}
 	}
 

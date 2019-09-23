@@ -173,12 +173,14 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 
 		validate(aspectInstanceFactory.getAspectMetadata().getAspectClass());
 
+		//切点信息的获取
 		AspectJExpressionPointcut expressionPointcut = getPointcut(
 				candidateAdviceMethod, aspectInstanceFactory.getAspectMetadata().getAspectClass());
 		if (expressionPointcut == null) {
 			return null;
 		}
 
+		//根据切点的信息生成增强器
 		return new InstantiationModelAwarePointcutAdvisorImpl(expressionPointcut, candidateAdviceMethod,
 				this, aspectInstanceFactory, declarationOrderInAspect, aspectName);
 	}
@@ -192,6 +194,8 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 
 		AspectJExpressionPointcut ajexp =
 				new AspectJExpressionPointcut(candidateAspectClass, new String[0], new Class<?>[0]);
+
+		//提取得到的注解中的表达式,比如: @Pointcut("execution(*.*.*test(..))") , 这个expression完全是一个字符串
 		ajexp.setExpression(aspectJAnnotation.getPointcutExpression());
 		return ajexp;
 	}
@@ -223,9 +227,9 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 		}
 
 		AbstractAspectJAdvice springAdvice;
-
+		//十分重要逻辑:🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀创建各种类型的增强器
 		switch (aspectJAnnotation.getAnnotationType()) {
-			case AtBefore:
+			case AtBefore:   //@Before 型增强器,再次复习一下jdk如何实现增强: 创建目标类接口的实现类
 				springAdvice = new AspectJMethodBeforeAdvice(
 						candidateAdviceMethod, expressionPointcut, aspectInstanceFactory);
 				break;

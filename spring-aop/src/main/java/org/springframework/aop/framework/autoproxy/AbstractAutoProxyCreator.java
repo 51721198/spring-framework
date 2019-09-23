@@ -442,6 +442,8 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 	 * @see #buildAdvisors
 	 */
 	protected Object createProxy(
+			//创建代理类,再次复习JDK如何实现代理:创建目标类接口的一个实现类
+			//这个函数里面主要进行的是proxyFactory的初始化工作
 			Class<?> beanClass, String beanName, Object[] specificInterceptors, TargetSource targetSource) {
 
 		if (this.beanFactory instanceof ConfigurableListableBeanFactory) {
@@ -449,28 +451,33 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 		}
 
 		ProxyFactory proxyFactory = new ProxyFactory();
+		//获取当前类中的相关属性
 		proxyFactory.copyFrom(this);
 
+		//这里决定对于给定的bean是否应该使用targetClass而不是它的接口代理
+		//检查proxyTargetClass设置以及preserveTargetClass属性
 		if (!proxyFactory.isProxyTargetClass()) {
-			if (shouldProxyTargetClass(beanClass, beanName)) {
-				proxyFactory.setProxyTargetClass(true);
+			if (shouldProxyTargetClass(beanClass, beanName)) {    //针对目标类进行代理,比如cglib,创建子类继承目标类
+				proxyFactory.setProxyTargetClass(true);  //这里只是设置了一个标记,实际创建在后面
 			}
 			else {
-				evaluateProxyInterfaces(beanClass, proxyFactory);
+				evaluateProxyInterfaces(beanClass, proxyFactory); //针对目标接口进行代理,JDK的动态代方法,创建接口的实现类
 			}
 		}
+		//逻辑到这里,proxyFactory已经知道了该采用接口还是class的方式进行代理,如果是接口方式,则也知道了需要代理的接口,接下来就是重点拉
 
-		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);
+		Advisor[] advisors = buildAdvisors(beanName, specificInterceptors);  //将拦截器封装成增强器
 		for (Advisor advisor : advisors) {
-			proxyFactory.addAdvisor(advisor);
+			proxyFactory.addAdvisor(advisor);  //加入增强器
 		}
 
+		//设置要代理的类(如果是接口,则前面已经进行过设置)
 		proxyFactory.setTargetSource(targetSource);
-		customizeProxyFactory(proxyFactory);
+		customizeProxyFactory(proxyFactory);  //定制代理
 
-		proxyFactory.setFrozen(this.freezeProxy);
+		proxyFactory.setFrozen(this.freezeProxy);//用来控制代理工厂被配置后,是否还允许修改通知,默认为false,也就是代理配置后不允许修改代理的配置
 		if (advisorsPreFiltered()) {
-			proxyFactory.setPreFiltered(true);
+			proxyFactory.setPreFiltered(true);   //20190923
 		}
 
 		return proxyFactory.getProxy(getProxyClassLoader());

@@ -113,7 +113,7 @@ public class ProxyProcessorSupport extends ProxyConfig implements Ordered, BeanC
 			}
 		}
 		else {
-			proxyFactory.setProxyTargetClass(true);
+			proxyFactory.setProxyTargetClass(true);   //不能使用接口方式代理,这时候要后撤到class方式代理
 		}
 	}
 
