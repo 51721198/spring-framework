@@ -16,15 +16,6 @@
 
 package org.springframework.aop.aspectj.annotation;
 
-import java.io.Serializable;
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
-
 import org.aopalliance.aop.Advice;
 import org.aspectj.lang.annotation.After;
 import org.aspectj.lang.annotation.AfterReturning;
@@ -33,7 +24,6 @@ import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.annotation.DeclareParents;
 import org.aspectj.lang.annotation.Pointcut;
-
 import org.springframework.aop.Advisor;
 import org.springframework.aop.MethodBeforeAdvice;
 import org.springframework.aop.aspectj.AbstractAspectJAdvice;
@@ -53,6 +43,15 @@ import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.util.comparator.CompoundComparator;
 import org.springframework.util.comparator.InstanceComparator;
+
+import java.io.Serializable;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Factory that can create Spring AOP Advisors given AspectJ classes from
@@ -133,13 +132,10 @@ public class ReflectiveAspectJAdvisorFactory extends AbstractAspectJAdvisorFacto
 
 	private List<Method> getAdvisorMethods(Class<?> aspectClass) {
 		final List<Method> methods = new LinkedList<>();
-		ReflectionUtils.doWithMethods(aspectClass, new ReflectionUtils.MethodCallback() {
-			@Override
-			public void doWith(Method method) throws IllegalArgumentException {
-				// Exclude pointcuts
-				if (AnnotationUtils.getAnnotation(method, Pointcut.class) == null) {
-					methods.add(method);
-				}
+		ReflectionUtils.doWithMethods(aspectClass, method -> {
+			// Exclude pointcuts
+			if (AnnotationUtils.getAnnotation(method, Pointcut.class) == null) {
+				methods.add(method);
 			}
 		});
 		Collections.sort(methods, METHOD_COMPARATOR);

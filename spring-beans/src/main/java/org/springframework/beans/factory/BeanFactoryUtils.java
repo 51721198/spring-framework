@@ -16,16 +16,16 @@
 
 package org.springframework.beans.factory;
 
+import org.springframework.beans.BeansException;
+import org.springframework.core.ResolvableType;
+import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import org.springframework.beans.BeansException;
-import org.springframework.core.ResolvableType;
-import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 /**
  * Convenience methods operating on bean factories, in particular
@@ -215,13 +215,13 @@ public abstract class BeanFactoryUtils {
 	 */
 	public static String[] beanNamesForTypeIncludingAncestors(
 			ListableBeanFactory lbf, Class<?> type, boolean includeNonSingletons, boolean allowEagerInit) {
-
+                                    //type=Advisor.class
 		Assert.notNull(lbf, "ListableBeanFactory must not be null");
 		String[] result = lbf.getBeanNamesForType(type, includeNonSingletons, allowEagerInit);
 		if (lbf instanceof HierarchicalBeanFactory) {
 			HierarchicalBeanFactory hbf = (HierarchicalBeanFactory) lbf;
 			if (hbf.getParentBeanFactory() instanceof ListableBeanFactory) {
-				String[] parentResult = beanNamesForTypeIncludingAncestors(
+				String[] parentResult = beanNamesForTypeIncludingAncestors(  //一直递归到根Beanfactory在进行处理
 						(ListableBeanFactory) hbf.getParentBeanFactory(), type, includeNonSingletons, allowEagerInit);
 				List<String> resultList = new ArrayList<>();
 				resultList.addAll(Arrays.asList(result));

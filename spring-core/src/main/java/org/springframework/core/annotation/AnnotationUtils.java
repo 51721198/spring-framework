@@ -16,6 +16,15 @@
 
 package org.springframework.core.annotation;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.core.BridgeMethodResolver;
+import org.springframework.util.Assert;
+import org.springframework.util.ConcurrentReferenceHashMap;
+import org.springframework.util.ObjectUtils;
+import org.springframework.util.ReflectionUtils;
+import org.springframework.util.StringUtils;
+
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Repeatable;
 import java.lang.reflect.AnnotatedElement;
@@ -33,16 +42,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
-import org.springframework.core.BridgeMethodResolver;
-import org.springframework.util.Assert;
-import org.springframework.util.ConcurrentReferenceHashMap;
-import org.springframework.util.ObjectUtils;
-import org.springframework.util.ReflectionUtils;
-import org.springframework.util.StringUtils;
 
 /**
  * General utility methods for working with annotations, handling meta-annotations,
@@ -708,7 +707,7 @@ public abstract class AnnotationUtils {
 		if (superclass == null || Object.class == superclass) {
 			return null;
 		}
-		return findAnnotation(superclass, annotationType, visited);
+		return findAnnotation(superclass, annotationType, visited);  //从子类往父类递归
 	}
 
 	/**

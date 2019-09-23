@@ -16,20 +16,9 @@
 
 package org.springframework.aop.framework.autoproxy;
 
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-
 import org.aopalliance.aop.Advice;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
 import org.springframework.aop.Advisor;
 import org.springframework.aop.Pointcut;
 import org.springframework.aop.TargetSource;
@@ -48,6 +37,16 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.SmartInstantiationAwareBeanPostProcessor;
 import org.springframework.util.StringUtils;
+
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * {@link org.springframework.beans.factory.config.BeanPostProcessor} implementation
@@ -240,6 +239,9 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 
 	@Override
 	public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) throws BeansException {
+		//这个类既然实现了BeanPostProcesser接口,那么spring实例化bean之前就必然会调到这个地方了!!!!!!!这个就是创建代理的总入口!!!
+
+		//根据给定bean的classname构建一个key.格式className_beanname
 		Object cacheKey = getCacheKey(beanClass, beanName);
 
 		if (beanName == null || !this.targetSourcedBeans.contains(beanName)) {
@@ -259,7 +261,11 @@ public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
 			TargetSource targetSource = getCustomTargetSource(beanClass, beanName);
 			if (targetSource != null) {
 				this.targetSourcedBeans.add(beanName);
+
+				//获取要被代理的对象的切点, 增强方法等等信息.
 				Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(beanClass, beanName, targetSource);
+				//为目标类创建合适的代理类,核心逻辑入口
+				//🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
 				Object proxy = createProxy(beanClass, beanName, specificInterceptors, targetSource);
 				this.proxyTypes.put(cacheKey, proxy.getClass());
 				return proxy;
